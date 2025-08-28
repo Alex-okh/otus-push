@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" status="WARN"
+               xmlns="http://logging.apache.org/log4j/2.0/config"
+               xsi:schemaLocation="
+                   http://logging.apache.org/log4j/2.0/config
+                   https://raw.githubusercontent.com/apache/logging-log4j2/master/log4j-core/src/main/resources/org/apache/logging/log4j/core/config/xml/log4j-config.xsd">
+
+    <!-- Логи выводятся в консоль и файл. Сообщения с уровнем error дублируются в logs/error.log. Файлы не более 5Мб и не более 10 шт. -->
+
+    <Appenders>
+        <!-- Консольный аппендер -->
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} %-5p %c{1}:%L - %m%n"/>
+        </Console>
+
+        <!-- Основной файловый аппендер -->
+        <RollingFile name="FileLogger"
+                     fileName="logs/app.log"
+                     filePattern="logs/app-%d{yyyy-MM-dd}-%i.log"
+                     append="true">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss,SSS} %-5p %c{1}:%L - %m%n"/>
+            <Policies>
+                <!-- Добавлена политика по времени -->
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <SizeBasedTriggeringPolicy size="5MB"/>
+            </Policies>
+            <DefaultRolloverStrategy fileIndex="max" max="10">
+                <Delete basePath="logs" maxDepth="1">
+                    <!-- Уточненный шаблон для удаления -->
+                    <IfFileName glob="app-*.log"/>
+                    <IfAccumulatedFileCount exceeds="10"/>
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
+
+        <!-- Аппендер для ошибок -->
+        <RollingFile name="ErrorFileLogger"
+                     fileName="logs/error.log"
+                     filePattern="logs/error-%d{yyyy-MM-dd}-%i.log"
+                     append="true">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss,SSS} %-5p %c{1}:%L - %m%n"/>
+            <Filters>
+                <ThresholdFilter level="ERROR" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+            <Policies>
+                <!-- Добавлена политика по времени -->
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <SizeBasedTriggeringPolicy size="5MB"/>
+            </Policies>
+            <DefaultRolloverStrategy fileIndex="max" max="10">
+                <Delete basePath="logs" maxDepth="1">
+                    <!-- Уточненный шаблон для удаления -->
+                    <IfFileName glob="error-*.log"/>
+                    <IfAccumulatedFileCount exceeds="10"/>
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
+        <!-- JDBC Appender -->
+        <JDBC name="DB" tableName="logs">
+
+            <!-- Источник подключения (DataSource или ConnectionFactory) -->
+            <ConnectionFactory
+                    class="org.test.firebase.pushservice.service.CustomConnectionFactory"
+                    method="getConnection"/>
+            <!-- Колонки и их значения -->
+            <Column name="timestamp" isEventTimestamp="true"/>
+            <Column name="level" pattern="%level" isUnicode="false"/>
+            <Column name="logger" pattern="%logger" isUnicode="false"/>
+            <Column name="message" pattern="%message" isUnicode="false"/>
+            <Column name="exception" pattern="%ex{full}" isUnicode="false"/>
+            <Column name="thread" pattern="%thread" isUnicode="false"/>
+            <Column name="context" pattern="%mdc{context}" isUnicode="false"/>
+        </JDBC>
+    </Appenders>
+
+    <Loggers>
+        <Root level="INFO">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="FileLogger"/>
+            <AppenderRef ref="ErrorFileLogger"/>
+            <AppenderRef ref="DB"/>
+        </Root>
+    </Loggers>
+</Configuration>
