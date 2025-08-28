@@ -1,0 +1,8 @@
+/src/main/resources/firebase-credentials.json
+/src/docker/test/firebase-messaging-sw.js
+/src/docker/test/index.html
+/.idea/
+/build/
+/logs/
+/src/PUSH_TEST/
+/.gradle/
